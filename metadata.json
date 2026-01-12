@@ -1,0 +1,5 @@
+{
+  "name": "ProjectForge Meta-Agent",
+  "description": "A high-performance meta-agent builder that ingests code fragments, snippets, or ZIP files and reassembles them into a unified, executable FastAPI or Bun backend.",
+  "requestFramePermissions": []
+}
