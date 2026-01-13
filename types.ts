@@ -41,6 +41,7 @@ export interface CanonicalProject {
   meta: {
     name: string;
     description: string;
+    reasoning: string; // La réflexion profonde de l'agent
     target: {
       runtime: RuntimeTarget;
     };

@@ -4,7 +4,8 @@ import {
   Plus, History, Zap, ArrowRight, Download, Loader2, Trash2, 
   ChevronRight, Moon, Sun, Box, Archive, Upload, 
   CheckCircle, Code, Settings, FileJson, Copy, Maximize2,
-  Terminal, Layers, FileCode, AlertCircle, MessageSquare
+  Terminal, Layers, FileCode, AlertCircle, MessageSquare,
+  BrainCircuit, Info
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { PocketStore, SourceFile, Artifact, RuntimeTarget } from './types';
@@ -54,7 +55,7 @@ const App: React.FC = () => {
     if (!files || files.length === 0 || !session) return;
     
     setIsProcessing(true);
-    setSession(prev => prev ? ({ ...prev, currentStep: 'Ingestion des fichiers...' }) : null);
+    setSession(prev => prev ? ({ ...prev, currentStep: 'Analyse des octets...' }) : null);
     try {
       const newSources: SourceFile[] = [];
       for (let i = 0; i < files.length; i++) {
@@ -70,7 +71,7 @@ const App: React.FC = () => {
           newSources.push(singleSource);
         }
       }
-      setSession(prev => prev ? ({ ...prev, sources: [...prev.sources, ...newSources], currentStep: 'Sources prêtes.' }) : null);
+      setSession(prev => prev ? ({ ...prev, sources: [...prev.sources, ...newSources], currentStep: 'Fichiers ingérés.' }) : null);
     } catch (err) {
       console.error(err);
     } finally {
@@ -82,23 +83,22 @@ const App: React.FC = () => {
   const addSnippet = () => {
     if (!session || !snippetContent.trim()) return;
     const file = ingestSnippet(snippetName, snippetContent);
-    setSession({ ...session, sources: [...session.sources, file], currentStep: `Snippet ${snippetName} ajouté.` });
+    setSession({ ...session, sources: [...session.sources, file], currentStep: `Snippet ajouté.` });
     setSnippetContent('');
   };
 
   const handleForge = async () => {
     if (!session || session.sources.length === 0) return;
     setIsProcessing(true);
-    setSession({ ...session, status: 'analyzing', currentStep: 'Intelligence Artificielle en action : Analyse structurelle...' });
+    setSession({ ...session, status: 'analyzing', currentStep: 'Réflexion profonde de l\'architecte (Deep Reasoning)...' });
     
     try {
-      // Pass extraInstructions to the architect
       const canonical = await buildCanonical(session.sources, targetRuntime, extraInstructions);
       setSession(prev => ({ 
         ...prev!, 
         canonical, 
         status: 'generating', 
-        currentStep: 'Unification UI & Câblage Backend...' 
+        currentStep: 'Synthèse de l\'arborescence et des connexions...' 
       }));
 
       const artifacts = await generateProjectFiles(canonical, extraInstructions);
@@ -107,13 +107,13 @@ const App: React.FC = () => {
         canonical, 
         artifacts, 
         status: 'ready', 
-        currentStep: 'Forge terminée. Projet prêt pour export.' 
+        currentStep: 'Projet assemblé avec succès.' 
       };
       setSession(finalSession);
       setHistory([finalSession, ...history]);
     } catch (err) {
       console.error(err);
-      setSession({ ...session, status: 'error', currentStep: 'Erreur lors de la Forge. Vérifiez vos crédits API.' });
+      setSession({ ...session, status: 'error', currentStep: 'Échec de la réflexion architecturale.' });
     } finally {
       setIsProcessing(false);
     }
@@ -168,9 +168,9 @@ const App: React.FC = () => {
               <button 
                 onClick={() => setShowCanonical(!showCanonical)}
                 className={`p-2 rounded-xl border transition-all ${showCanonical ? 'bg-blue-600/10 border-blue-600 text-blue-600' : 'border-[var(--border)] text-slate-500'}`}
-                title="Voir le Modèle Canonique"
+                title="Logique de l'Architecte"
               >
-                <FileJson className="w-5 h-5" />
+                <BrainCircuit className="w-5 h-5" />
               </button>
             )}
             {session?.status === 'ready' && (
@@ -185,14 +185,14 @@ const App: React.FC = () => {
           {view === 'landing' && (
             <div className="max-w-4xl mx-auto mt-20 text-center space-y-16 animate-slide-up">
               <div className="space-y-6">
-                <div className="px-5 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[10px] font-black uppercase tracking-[0.4em] rounded-full inline-block">Méta-Agent Assembleur Fullstack</div>
-                <h2 className="text-5xl sm:text-8xl font-black tracking-tighter af-gradient-text leading-tight">Forgez du code,<br/>connectez les points.</h2>
+                <div className="px-5 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[10px] font-black uppercase tracking-[0.4em] rounded-full inline-block">Méta-Architecte Raisonné</div>
+                <h2 className="text-5xl sm:text-8xl font-black tracking-tighter af-gradient-text leading-tight">Une réflexion d'élite,<br/>un code unifié.</h2>
                 <p className="text-lg sm:text-2xl text-slate-500 font-light max-w-2xl mx-auto leading-relaxed">
-                  Importez vos composants UI et vos fragments backend. ProjectForge s'occupe de l'harmonisation visuelle et du câblage automatique.
+                  L'agent analyse chaque fragment, anticipe les besoins et forge une architecture cohérente avant de générer une seule ligne de code.
                 </p>
               </div>
               <button onClick={startNewSession} className="px-12 py-6 bg-blue-600 text-white rounded-[32px] font-black uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-4 mx-auto group">
-                Initialiser la Forge <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                Lancer la Forge <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           )}
@@ -201,33 +201,29 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 pb-20">
               <div className="lg:col-span-4 space-y-8 sticky top-0 self-start h-fit">
                 <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[40px] p-8 space-y-8 shadow-sm">
-                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">01. Ingestion de Fragments</h3>
-                  
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">01. Sources</h3>
                   <div className="space-y-4">
                     <label className="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--border)] rounded-[24px] cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 transition-all">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500 transition-colors" />
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest text-center px-4">ZIP, MD, TXT, PY, JS, TSX...</p>
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
+                        <Upload className="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500" />
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-4">Fragments (.zip, .tsx, .py, .md)</p>
                       </div>
-                      <input type="file" className="hidden" multiple accept=".zip,.md,.txt,.py,.js,.ts,.tsx,.json,.html,.css" onChange={handleFileUpload} />
+                      <input type="file" className="hidden" multiple onChange={handleFileUpload} />
                     </label>
                   </div>
 
                   <div className="space-y-4 pt-6 border-t border-[var(--border)]">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Snippet d'Agent ou d'UI</p>
-                      <Terminal className="w-4 h-4 text-slate-400" />
-                    </div>
+                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Snippet Direct</p>
                     <input 
                       type="text" 
-                      placeholder="component.tsx ou flow.py" 
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-4 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      placeholder="nom_du_fichier.ts" 
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-4 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/20"
                       value={snippetName}
                       onChange={e => setSnippetName(e.target.value)}
                     />
                     <textarea 
-                      placeholder="Collez du code React, FastAPI, etc..." 
-                      className="w-full h-44 bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-5 text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500/20 resize-none custom-scrollbar"
+                      placeholder="Code ou texte brut..." 
+                      className="w-full h-44 bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-5 text-xs font-mono outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
                       value={snippetContent}
                       onChange={e => setSnippetContent(e.target.value)}
                     />
@@ -238,18 +234,18 @@ const App: React.FC = () => {
                 </section>
 
                 <section className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[40px] p-8 space-y-8 shadow-sm">
-                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">02. Configuration Forge</h3>
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">02. Instructions</h3>
                   <div className="space-y-6">
                     <div>
-                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Cible Backend</p>
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Runtime</p>
                       <div className="space-y-2">
                         {(['bun-http', 'python-fastapi', 'node-express'] as RuntimeTarget[]).map(r => (
                           <button 
                             key={r} 
                             onClick={() => setTargetRuntime(r)}
-                            className={`w-full flex justify-between items-center p-4 rounded-[20px] border-2 transition-all ${targetRuntime === r ? 'bg-blue-600/10 border-blue-600 text-blue-600' : 'bg-transparent border-[var(--border)] hover:border-slate-400 text-slate-500'}`}
+                            className={`w-full flex justify-between items-center p-4 rounded-[20px] border-2 transition-all ${targetRuntime === r ? 'bg-blue-600/10 border-blue-600 text-blue-600' : 'bg-transparent border-[var(--border)] text-slate-500'}`}
                           >
-                            <span className="text-[10px] font-black uppercase">{r.split('-')[1]} <span className="text-[9px] opacity-60 ml-1">({r.split('-')[0]})</span></span>
+                            <span className="text-[10px] font-black uppercase">{r.split('-')[1]}</span>
                             {targetRuntime === r && <CheckCircle className="w-4 h-4" />}
                           </button>
                         ))}
@@ -257,13 +253,10 @@ const App: React.FC = () => {
                     </div>
 
                     <div className="space-y-4 pt-4 border-t border-[var(--border)]">
-                      <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Le Brief (Instructions)</p>
-                        <MessageSquare className="w-4 h-4 text-slate-400" />
-                      </div>
+                      <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Brief Stratégique</p>
                       <textarea 
-                        placeholder="Ex: 'Ajoute une authentification JWT', 'Fais un style Glassmorphism', 'Connecte le formulaire au flow d'ingestion'..." 
-                        className="w-full h-32 bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-4 text-[10px] font-medium outline-none focus:ring-2 focus:ring-blue-500/20 resize-none custom-scrollbar"
+                        placeholder="Ex: 'Architecture micro-services', 'Style Glassmorphism dark-only', 'Ajoute un logger'..." 
+                        className="w-full h-32 bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-4 text-[10px] font-medium outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
                         value={extraInstructions}
                         onChange={e => setExtraInstructions(e.target.value)}
                       />
@@ -272,76 +265,80 @@ const App: React.FC = () => {
                   <button 
                     onClick={handleForge} 
                     disabled={session.sources.length === 0 || isProcessing}
-                    className="w-full py-6 bg-blue-600 text-white rounded-[24px] font-black uppercase tracking-[0.2em] shadow-xl hover:brightness-110 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+                    className="w-full py-6 bg-blue-600 text-white rounded-[24px] font-black uppercase tracking-[0.2em] shadow-xl hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
                   >
                     {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5 fill-current" />}
-                    Lancer l'Assemblage
+                    Générer le Projet
                   </button>
                 </section>
               </div>
 
               <div className="lg:col-span-8 space-y-8">
-                <div className={`bg-[var(--bg-secondary)] border rounded-[40px] p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm transition-all ${session.status === 'error' ? 'border-red-500 bg-red-500/5' : 'border-[var(--border)]'}`}>
+                {/* Reasoning Box - New Feature */}
+                {session.canonical?.meta.reasoning && (
+                  <div className="bg-blue-600/5 border-2 border-blue-600/20 rounded-[40px] p-8 space-y-6 animate-slide-up shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <BrainCircuit className="w-6 h-6 text-blue-600" />
+                      <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">Raisonnement de l'Architecte</h3>
+                    </div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium italic">
+                      "{session.canonical.meta.reasoning}"
+                    </p>
+                  </div>
+                )}
+
+                <div className={`bg-[var(--bg-secondary)] border rounded-[40px] p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm transition-all ${session.status === 'error' ? 'border-red-500' : 'border-[var(--border)]'}`}>
                   <div className="flex items-center gap-6">
-                    <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center transition-all ${isProcessing ? 'bg-blue-600 text-white animate-pulse' : (session.status === 'error' ? 'bg-red-500 text-white' : 'bg-blue-600/10 text-blue-600')}`}>
-                      {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : (session.status === 'error' ? <AlertCircle className="w-8 h-8" /> : <Layers className="w-8 h-8" />)}
+                    <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center ${isProcessing ? 'bg-blue-600 text-white animate-pulse' : 'bg-blue-600/10 text-blue-600'}`}>
+                      {isProcessing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Layers className="w-8 h-8" />}
                     </div>
                     <div>
                       <h3 className="text-2xl font-black tracking-tight">{session.currentStep}</h3>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                          <Archive className="w-3 h-3" /> {session.sources.length} sources
-                        </span>
-                        {session.status === 'ready' && <span className="text-green-500 font-bold text-[10px] uppercase">● Opérationnel</span>}
-                      </div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{session.sources.length} sources analysées</p>
                     </div>
                   </div>
+                  {session.status === 'ready' && <div className="px-4 py-2 bg-green-500/10 text-green-500 rounded-full text-[10px] font-black uppercase">Prêt à l'emploi</div>}
                 </div>
 
                 {showCanonical && session.canonical && (
-                  <div className="bg-[var(--bg-secondary)] border-2 border-blue-600/30 rounded-[40px] p-10 space-y-6 animate-slide-up shadow-2xl overflow-hidden">
+                  <div className="bg-[var(--bg-secondary)] border-2 border-blue-600/30 rounded-[40px] p-10 space-y-8 animate-slide-up shadow-2xl">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black uppercase tracking-[0.4em] text-blue-600">Plan de Montage Fullstack</h4>
-                      <span className="text-[10px] font-black bg-blue-600/10 px-3 py-1 rounded-full text-blue-600 uppercase tracking-widest">Connected Backend IR</span>
+                      <h4 className="text-xs font-black uppercase tracking-[0.4em] text-blue-600">Plan Structurel Déduit</h4>
+                      <Info className="w-5 h-5 text-slate-300" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                       <div className="space-y-4">
-                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Routes API Détectées</p>
-                         {session.canonical.api.endpoints.map((e, i) => (
-                           <div key={i} className="text-xs font-bold p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border)] flex justify-between">
-                              <span>{e.path}</span> <span className="text-blue-500">{e.method}</span>
-                           </div>
-                         ))}
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-[var(--border)] pb-2">Back: Endpoints API</p>
+                         <div className="space-y-2">
+                           {session.canonical.api.endpoints.map((e, i) => (
+                             <div key={i} className="text-xs font-bold p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border)] flex justify-between group">
+                                <span className="text-slate-500 group-hover:text-blue-500 transition-colors">{e.path}</span> 
+                                <span className="opacity-40 uppercase">{e.method}</span>
+                             </div>
+                           ))}
+                         </div>
                       </div>
                       <div className="space-y-4">
-                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Interface & Pages</p>
-                         {session.canonical.ui.pages.map((p, i) => (
-                           <div key={i} className="text-xs font-bold p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border)]">
-                              {p.name} <span className="opacity-50 ml-2">({p.route})</span>
-                           </div>
-                         ))}
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-[var(--border)] pb-2">Front: Pages Harmonisées</p>
+                         <div className="space-y-2">
+                           {session.canonical.ui.pages.map((p, i) => (
+                             <div key={i} className="text-xs font-bold p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border)]">
+                                {p.name} <span className="opacity-30 ml-2">({p.route})</span>
+                             </div>
+                           ))}
+                         </div>
                       </div>
-                    </div>
-                    <div className="pt-4 border-t border-[var(--border)]">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Thème Harmonisé</p>
-                       <div className="flex gap-4">
-                          <div className="flex items-center gap-2">
-                             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: session.canonical.ui.theme.primaryColor }} />
-                             <span className="text-xs font-bold">{session.canonical.ui.theme.primaryColor}</span>
-                          </div>
-                          <span className="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">{session.canonical.ui.theme.style}</span>
-                       </div>
                     </div>
                   </div>
                 )}
 
                 {session.status === 'ready' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
+                  <div className="artifact-grid animate-slide-up">
                     {session.artifacts.map((art, idx) => (
                       <div 
                         key={idx} 
                         onClick={() => setActiveArtifact(art)}
-                        className="p-8 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[32px] hover:border-blue-600 transition-all cursor-pointer group hover:shadow-xl"
+                        className="p-8 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[32px] hover:border-blue-600 transition-all cursor-pointer group shadow-sm hover:shadow-lg"
                       >
                         <div className="flex justify-between items-center mb-6">
                           <div className="p-4 bg-blue-500/10 text-blue-500 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
@@ -350,7 +347,7 @@ const App: React.FC = () => {
                           <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{art.type}</span>
                         </div>
                         <h4 className="font-black text-lg truncate group-hover:text-blue-600">{art.path}</h4>
-                        <p className="text-[11px] text-slate-500 mt-2">Code unifié et connecté.</p>
+                        <p className="text-[11px] text-slate-500 mt-2">Prêt pour exécution.</p>
                       </div>
                     ))}
                   </div>
@@ -365,24 +362,16 @@ const App: React.FC = () => {
                             <p className="text-xs font-black truncate">{s.path}</p>
                             <p className="text-[9px] font-black uppercase opacity-40">{s.content.length} chars</p>
                           </div>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSession(prev => prev ? ({ ...prev, sources: prev.sources.filter((_, idx) => idx !== i) }) : null);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                          <button onClick={() => setSession(prev => prev ? ({ ...prev, sources: prev.sources.filter((_, idx) => idx !== i) }) : null)} className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
                        </div>
                      ))}
                    </div>
                 )}
 
-                {session.status === 'idle' && session.sources.length === 0 && (
-                   <div className="h-[400px] flex flex-col items-center justify-center border-4 border-dashed border-[var(--border)] rounded-[60px] opacity-40">
-                      <Box className="w-16 h-16 mb-4 text-slate-300" />
-                      <p className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">Prêt pour l'ingestion</p>
+                {session.sources.length === 0 && (
+                   <div className="h-64 flex flex-col items-center justify-center border-4 border-dashed border-[var(--border)] rounded-[60px] opacity-20">
+                      <Box className="w-12 h-12 mb-4" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.4em]">Ready for ingest</p>
                    </div>
                 )}
               </div>
@@ -394,7 +383,7 @@ const App: React.FC = () => {
               <h2 className="text-5xl font-black af-gradient-text tracking-tighter">Archives</h2>
               <div className="grid grid-cols-1 gap-6">
                 {history.map(p => (
-                  <div key={p.id} onClick={() => { setSession(p); setView('builder'); }} className="p-10 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[48px] flex justify-between items-center group cursor-pointer hover:border-blue-600 transition-all">
+                  <div key={p.id} onClick={() => { setSession(p); setView('builder'); }} className="p-10 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[48px] flex justify-between items-center group cursor-pointer hover:border-blue-600 transition-all shadow-sm">
                     <div className="flex items-center gap-8">
                       <div className="w-16 h-16 rounded-[24px] bg-blue-600/10 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all"><Archive /></div>
                       <div>
@@ -405,11 +394,6 @@ const App: React.FC = () => {
                     <ChevronRight className="w-8 h-8 text-slate-300 group-hover:text-blue-600" />
                   </div>
                 ))}
-                {history.length === 0 && (
-                  <div className="text-center py-20 opacity-30">
-                    <p className="text-xl font-black italic">Aucun projet dans les archives.</p>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -426,12 +410,12 @@ const App: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600">{activeArtifact.path}</span>
               </div>
               <div className="flex gap-4">
-                <button onClick={() => navigator.clipboard.writeText(activeArtifact.content)} className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all"><Copy className="w-4 h-4 inline mr-2"/> Copier</button>
-                <button onClick={() => setActiveArtifact(null)} className="p-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-all"><Trash2 className="w-6 h-6" /></button>
+                <button onClick={() => navigator.clipboard.writeText(activeArtifact.content)} className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest">Copier</button>
+                <button onClick={() => setActiveArtifact(null)} className="p-3 text-red-500"><Trash2 className="w-6 h-6" /></button>
               </div>
             </header>
             <div className="flex-1 overflow-y-auto p-10 bg-[var(--bg-primary)] custom-scrollbar">
-              <pre className="text-[13px] font-mono text-slate-300 p-8 bg-black/90 rounded-3xl overflow-x-auto shadow-inner">
+              <pre className="text-[13px] font-mono text-slate-300 p-8 bg-black/90 rounded-3xl overflow-x-auto">
                 <code>{activeArtifact.content}</code>
               </pre>
             </div>

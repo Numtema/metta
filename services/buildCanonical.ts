@@ -9,28 +9,28 @@ export async function buildCanonical(
 ): Promise<CanonicalProject> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const summary = sources.map(f => `FILE: ${f.path}\nROLE_HINT: ${f.roleHint || 'unknown'}\nCONTENT: ${f.content.substring(0, 800)}...`).join('\n\n');
+  // On limite encore plus le résumé pour éviter de saturer la fenêtre de contexte
+  const summary = sources.map(f => `FILE: ${f.path}\nCONTENT: ${f.content.substring(0, 500)}...`).join('\n\n');
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Tu es un Architecte Fullstack Senior. 
-    Analyse les fichiers sources et les instructions de l'utilisateur pour créer une structure CanonicalProject JSON.
+    model: 'gemini-3-pro-preview',
+    contents: `Tu es un Architecte Logiciel. Analyse ces fragments et définis le plan "Canonique".
     
-    OBJECTIFS :
-    1. Extraire la structure API (Endpoints).
-    2. Extraire la logique métier (Flows).
-    3. Analyser les fragments d'UI pour identifier les pages, les thèmes et les composants.
-    4. HARMONISATION : Définis un thème cohérent basé sur les snippets fournis ET les instructions.
-    
-    CIBLE RUNTIME : ${targetRuntime}
+    IMPORTANT : 
+    - Reste CONCIS. 
+    - Utilise des IDs COURTS (ex: "upload_file", pas "pipeline_id_010101..."). 
+    - Ne te répète pas.
+    - Le raisonnement (reasoning) doit être un paragraphe dense de max 500 caractères.
 
     INSTRUCTIONS UTILISATEUR :
-    ${extraInstructions || "Aucune instruction spécifique. Fais au mieux selon les fichiers."}
-    
+    ${extraInstructions || "Projet standard."}
+
     SOURCES :
     ${summary}
     `,
     config: {
+      thinkingConfig: { thinkingBudget: 8000 },
+      maxOutputTokens: 60000, 
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -39,9 +39,10 @@ export async function buildCanonical(
             type: Type.OBJECT,
             properties: {
               name: { type: Type.STRING },
-              description: { type: Type.STRING }
+              description: { type: Type.STRING },
+              reasoning: { type: Type.STRING }
             },
-            required: ["name", "description"]
+            required: ["name", "description", "reasoning"]
           },
           api: {
             type: Type.OBJECT,
@@ -111,8 +112,7 @@ export async function buildCanonical(
               properties: {
                 name: { type: Type.STRING },
                 version: { type: Type.STRING }
-              },
-              required: ["name", "version"]
+              }
             }
           }
         },
@@ -121,21 +121,26 @@ export async function buildCanonical(
     }
   });
 
-  const rawJson = JSON.parse(response.text || "{}");
+  const text = response.text || "{}";
+  const cleanedJson = text.replace(/^```json/, "").replace(/```$/, "").trim();
   
-  const depsRecord: Record<string, string> = {};
-  if (Array.isArray(rawJson.dependencies)) {
-    rawJson.dependencies.forEach((d: any) => {
-      depsRecord[d.name] = d.version;
-    });
-  }
-
-  return {
-    ...rawJson,
-    dependencies: depsRecord,
-    meta: {
-      ...rawJson.meta,
-      target: { runtime: targetRuntime }
+  try {
+    const rawJson = JSON.parse(cleanedJson);
+    const depsRecord: Record<string, string> = {};
+    if (Array.isArray(rawJson.dependencies)) {
+      rawJson.dependencies.forEach((d: any) => { if(d.name) depsRecord[d.name] = d.version || "latest"; });
     }
-  };
+
+    return {
+      ...rawJson,
+      dependencies: depsRecord,
+      meta: {
+        ...rawJson.meta,
+        target: { runtime: targetRuntime }
+      }
+    };
+  } catch (e) {
+    console.error("Erreur JSON", e, cleanedJson);
+    throw new Error("L'IA a produit un JSON invalide (limite de tokens). Essayez de réduire le nombre de fichiers ou d'être plus spécifique.");
+  }
 }

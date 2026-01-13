@@ -9,30 +9,27 @@ export async function generateProjectFiles(
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const runtime = canonical.meta.target.runtime;
 
-  const prompt = `Tu es l'Ingénieur Assembleur. Ta mission est de générer un projet COMPLET et CONNECTÉ.
+  const prompt = `Génère le code source complet pour le projet "${canonical.meta.name}".
   
-  PROJET : ${canonical.meta.name}
-  CIBLE : ${runtime}
-  THEME UI : ${JSON.stringify(canonical.ui.theme)}
+  RÉFLEXION : ${canonical.meta.reasoning}
+  THEME : ${JSON.stringify(canonical.ui.theme)}
   
-  INSTRUCTIONS CRITIQUES :
-  1. UNIFICATION UI : Réécris les fragments UI pour qu'ils partagent le même thème Tailwind et la même esthétique ${canonical.ui.theme.style}.
-  2. CONNEXION : Dans le code frontend (pages/composants), implémente les appels 'fetch' vers les endpoints backend définis dans le schéma : ${JSON.stringify(canonical.api.endpoints)}.
-  3. BACKEND : Génère le serveur ${runtime} avec les routes correspondantes qui exécutent les flows décrits.
-  4. STRUCTURE : Produis une arborescence claire (ex: /client pour l'UI, /server pour le backend).
-  5. BRIEF UTILISATEUR : Prends en compte ces instructions spécifiques lors de la génération :
-     "${extraInstructions || "Aucune instruction spécifique."}"
-  
-  MODEL CANONIQUE :
-  ${JSON.stringify(canonical, null, 2)}
-  
-  Format de sortie : JSON array of { path: string, content: string, type: 'code' | 'config' | 'doc' }.
+  RÈGLES :
+  1. Produis un tableau JSON d'objets Artifact.
+  2. Chaque Artifact doit avoir path, content, et type.
+  3. Sois très concis dans les commentaires de code. 
+  4. NE PAS GÉNÉRER DE FICHIERS BINAIRES.
+  5. Assure-toi que les imports fonctionnent entre les fichiers générés.
+  6. Si le projet est grand, concentre-toi sur les fichiers CRITIQUES pour qu'il soit exécutable.
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-3-pro-preview',
     contents: prompt,
     config: {
+      thinkingConfig: { thinkingBudget: 8000 },
+      // 100k total - 8k thinking = 92k tokens pour le JSON. Large suffisant si pas de boucle infinie.
+      maxOutputTokens: 100000, 
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.ARRAY,
@@ -49,14 +46,17 @@ export async function generateProjectFiles(
     }
   });
 
+  const text = response.text || "[]";
+  const cleanedJson = text.replace(/^```json/, "").replace(/```$/, "").trim();
+
   try {
-    const rawArtifacts = JSON.parse(response.text || "[]");
+    const rawArtifacts = JSON.parse(cleanedJson);
     return rawArtifacts.map((art: any) => ({
       ...art,
       id: crypto.randomUUID()
     }));
   } catch (e) {
-    console.error("Génération échouée", e);
-    return [];
+    console.error("Génération corrompue", e, cleanedJson);
+    throw new Error("Le flux de génération a été tronqué. Essayez de générer le projet par étapes ou avec moins d'instructions.");
   }
 }
